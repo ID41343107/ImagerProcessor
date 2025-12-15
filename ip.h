@@ -20,8 +20,11 @@ public:
     void createMenus();
     void createToolBars();
     void loadFile (QString filename);
+
 private slots:
     void showOpenFile();
+    void bigsize();
+    void ssize();
 
 private:
     QWidget *central;
@@ -32,5 +35,7 @@ private:
     QLabel *imgWin;
     QAction *openFileAction;
     QAction *exitAction;
+    QAction *bigFileAction;
+    QAction *sAction;
 };
 #endif // IP_H

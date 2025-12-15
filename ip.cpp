@@ -12,7 +12,7 @@ ip::ip(QWidget *parent)
     QHBoxLayout *mainLayout = new QHBoxLayout (central);
     imgWin = new QLabel();
     QPixmap *initPixmap = new QPixmap(300,200);
-    initPixmap->fill (QColor(100,100,100));
+    initPixmap->fill (QColor(255,255,255));
     imgWin->resize (300,200);
     imgWin->setScaledContents (true);
     imgWin->setPixmap (*initPixmap);
@@ -35,21 +35,38 @@ void ip::createActions()
     openFileAction->setShortcut (tr("Ctrl+o"));
     openFileAction->setStatusTip (QStringLiteral("開啟影像檔案"));
     connect (openFileAction, SIGNAL (triggered()), this, SLOT (showOpenFile()));
+
     exitAction = new QAction (QStringLiteral("結束&Q"),this);
     exitAction->setShortcut (tr("Ctrl+o"));
     exitAction->setStatusTip (QStringLiteral("退出程式"));
     connect (exitAction, SIGNAL (triggered()), this, SLOT (close()));
+
+    bigFileAction = new QAction (QStringLiteral("放大&+"),this);
+    bigFileAction->setShortcut (tr("Ctrl+"));
+    bigFileAction->setStatusTip (QStringLiteral("放大"));
+    connect (bigFileAction, SIGNAL (triggered()), this, SLOT (bigsize()));
+
+    sAction = new QAction (QStringLiteral("縮小&-"),this);
+    sAction->setShortcut (tr("Ctrl-"));
+    sAction->setStatusTip (QStringLiteral("縮小"));
+    connect (sAction, SIGNAL (triggered()), this, SLOT (ssize()));
 }
 void ip::createMenus()
 {
     fileMenu = menuBar ()->addMenu (QStringLiteral ("檔案&F"));
     fileMenu->addAction(openFileAction);
     fileMenu->addAction (exitAction);
+    fileMenu = menuBar ()->addMenu (QStringLiteral ("工具&T"));
+    fileMenu->addAction(bigFileAction);
+    fileMenu->addAction (sAction);
 }
 void ip::createToolBars ()
 {
     fileTool = addToolBar("file");
     fileTool->addAction (openFileAction);
+    fileTool = addToolBar("file");
+    fileTool->addAction (bigFileAction);
+    fileTool->addAction (sAction);
 }
 void ip::loadFile (QString filename)
 {
@@ -80,4 +97,24 @@ void ip::showOpenFile()
             newIPWin->loadFile(filename);
         }
     }
+}
+
+void ip::bigsize()
+{
+    QImage bigsize;
+    bigsize =img.scaled(img.width()*2,img.width()*2);
+    QLabel *ret=new QLabel();
+    ret->setPixmap(QPixmap::fromImage(bigsize));
+    ret->setWindowTitle(tr("放大結果"));
+    ret->show();
+}
+
+void ip::ssize()
+{
+    QImage ssize;
+    ssize =img.scaled(img.width()/2,img.width()/2);
+    QLabel *ret=new QLabel();
+    ret->setPixmap(QPixmap::fromImage(ssize));
+    ret->setWindowTitle(tr("縮小結果"));
+    ret->show();
 }
