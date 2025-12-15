@@ -12,7 +12,7 @@ ip::ip(QWidget *parent)
     QHBoxLayout *mainLayout = new QHBoxLayout (central);
     imgWin = new QLabel();
     QPixmap *initPixmap = new QPixmap(300,200);
-    initPixmap->fill (QColor(255,255,255));
+    initPixmap->fill (QColor(100,100,100));
     imgWin->resize (300,200);
     imgWin->setScaledContents (true);
     imgWin->setPixmap (*initPixmap);
@@ -32,11 +32,11 @@ ip::~ip()
 void ip::createActions()
 {
     openFileAction = new QAction (QStringLiteral("開啟檔案&O"),this);
-    openFileAction->setShortcut (tr("Ctrl+0"));
+    openFileAction->setShortcut (tr("Ctrl+o"));
     openFileAction->setStatusTip (QStringLiteral("開啟影像檔案"));
     connect (openFileAction, SIGNAL (triggered()), this, SLOT (showOpenFile()));
     exitAction = new QAction (QStringLiteral("結束&Q"),this);
-    exitAction->setShortcut (tr("Ctrl+0"));
+    exitAction->setShortcut (tr("Ctrl+o"));
     exitAction->setStatusTip (QStringLiteral("退出程式"));
     connect (exitAction, SIGNAL (triggered()), this, SLOT (close()));
 }
