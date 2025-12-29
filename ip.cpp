@@ -3,14 +3,27 @@
 #include <QMenuBar>
 #include <QFileDialog>
 #include <QDebug>
+#include <QStatusBar>
 
 ip::ip(QWidget *parent)
     : QMainWindow(parent)
 {
+    statusLabel = new QLabel;
+    statusLabel->setText (QStringLiteral("指標位置"));
+    statusLabel->setFixedWidth (100);
+    mousePosLabel = new QLabel;
+    mousePosLabel->setText(tr(" "));
+    mousePosLabel->setFixedWidth (100);
+    statusBar()->addPermanentWidget (statusLabel);
+    statusBar()->addPermanentWidget (mousePosLabel);
+    setMouseTracking (true);
+
     setWindowTitle (QStringLiteral("影像處理"));
     central =new QWidget();
+    central->setMouseTracking (true);
     QHBoxLayout *mainLayout = new QHBoxLayout (central);
     imgWin = new QLabel();
+    imgWin->setMouseTracking (true);
     QPixmap *initPixmap = new QPixmap(300,200);
     gWin =new gtransform();
     initPixmap->fill (QColor(255,255,255));
@@ -27,7 +40,7 @@ ip::ip(QWidget *parent)
 
 ip::~ip()
 {
-
+    deleteResources();
 }
 
 void ip::createActions()
@@ -57,6 +70,11 @@ void ip::createActions()
     geometryAction->setStatusTip (QStringLiteral("影像幾何轉換"));
     connect (geometryAction, SIGNAL (triggered()), this, SLOT (showGeometryTransform()));
     connect (exitAction, SIGNAL (triggered()),gWin, SLOT (close()));
+
+    releaseAction = new QAction(QStringLiteral("釋放"), this);
+    releaseAction->setShortcut (tr("Ctrl+d"));
+    releaseAction->setStatusTip (QStringLiteral("釋放"));
+    connect (releaseAction, &QAction::triggered, this, &ip::deleteResources);
 }
 void ip::createMenus()
 {
@@ -68,6 +86,7 @@ void ip::createMenus()
     fileMenu->addAction(bigFileAction);
     fileMenu->addAction (sAction);
     fileMenu->addAction (geometryAction);
+    fileMenu->addAction (releaseAction);
 }
 void ip::createToolBars ()
 {
@@ -135,4 +154,54 @@ void ip:: showGeometryTransform()
     gWin->srcImg = img;
     gWin->inWin->setPixmap (QPixmap:: fromImage (gWin->srcImg));
     gWin->show();
+}
+
+void ip::deleteResources()
+{
+    if (gWin != nullptr)
+    {
+        delete gWin;
+        gWin = nullptr;
+    }
+    img = QImage();
+    statusBar()->showMessage(QStringLiteral("資源已釋放"));
+}
+
+void ip::mouseMoveEvent (QMouseEvent *event)
+{
+    int x=event->x();
+    int y=event->y();
+    QString str = "("+ QString::number(x) + "," +
+                  QString::number (y) +")";
+    if (!img.isNull() && x >= 0 && x < img.width() && y >= 0 && y < img.height())
+    {
+        QColor color = img.pixelColor(x, y);
+        int grayValue = (color.red() + color.green() + color.blue()) / 3;
+        str += " Gray: " + QString::number(grayValue);
+    }
+    mousePosLabel->setText(str);
+}
+void ip::mousePressEvent (QMouseEvent *event)
+{
+    QString str = "("+ QString::number (event->x()) + "," +
+                  QString::number (event->y()) +")";
+    if (event->button() == Qt::LeftButton)
+    {
+        statusBar()->showMessage (QStringLiteral("左鍵:")+str);
+    }
+    else if (event->button()== Qt::RightButton)
+    {
+        statusBar()->showMessage (QStringLiteral("右鍵:")+str);
+    }
+    else if (event->button() == Qt::MiddleButton)
+    {
+        statusBar()->showMessage (QStringLiteral("中鍵:")+str);
+    }
+}
+
+void ip::mouseReleaseEvent (QMouseEvent *event)
+{
+    QString str = "(" + QString::number (event->x()) + "," +
+                  QString::number (event->y()) +")";
+    statusBar ()->showMessage (QStringLiteral("釋放:")+str);
 }

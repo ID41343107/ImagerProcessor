@@ -8,6 +8,7 @@
 #include <QImage>
 #include <QLabel>
 #include "gtransform.h"
+#include <QMouseEvent>
 
 
 class ip : public QMainWindow
@@ -22,11 +23,17 @@ public:
     void createToolBars();
     void loadFile (QString filename);
 
+protected:
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+
 private slots:
     void showOpenFile();
     void bigsize();
     void ssize();
     void showGeometryTransform();
+    void deleteResources();
 
 private:
     gtransform *gWin;
@@ -36,10 +43,16 @@ private:
     QImage img;
     QString filename;
     QLabel *imgWin;
+
+    QLabel *statusLabel;
+    QLabel *mousePosLabel;
+
     QAction *openFileAction;
     QAction *exitAction;
     QAction *bigFileAction;
     QAction *sAction;
     QAction *geometryAction;
+    QAction *releaseAction;
+
 };
 #endif // IP_H
