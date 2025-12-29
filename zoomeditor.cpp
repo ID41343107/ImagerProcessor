@@ -121,9 +121,8 @@ void ZoomEditor::clearDrawing()
 void ZoomEditor::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
-        // Convert global position to imageLabel position
-        QPoint globalPos = event->globalPos();
-        QPoint labelPos = imageLabel->mapFromGlobal(globalPos);
+        // Get position relative to imageLabel
+        QPoint labelPos = imageLabel->mapFrom(this, event->pos());
         
         // Check if click is within image bounds
         if (labelPos.x() >= 0 && labelPos.x() < drawingImage.width() &&
@@ -137,8 +136,7 @@ void ZoomEditor::mousePressEvent(QMouseEvent *event)
 void ZoomEditor::mouseMoveEvent(QMouseEvent *event)
 {
     if ((event->buttons() & Qt::LeftButton) && isDrawing) {
-        QPoint globalPos = event->globalPos();
-        QPoint labelPos = imageLabel->mapFromGlobal(globalPos);
+        QPoint labelPos = imageLabel->mapFrom(this, event->pos());
         
         // Check if position is within image bounds
         if (labelPos.x() >= 0 && labelPos.x() < drawingImage.width() &&
@@ -151,8 +149,7 @@ void ZoomEditor::mouseMoveEvent(QMouseEvent *event)
 void ZoomEditor::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton && isDrawing) {
-        QPoint globalPos = event->globalPos();
-        QPoint labelPos = imageLabel->mapFromGlobal(globalPos);
+        QPoint labelPos = imageLabel->mapFrom(this, event->pos());
         
         if (labelPos.x() >= 0 && labelPos.x() < drawingImage.width() &&
             labelPos.y() >= 0 && labelPos.y() < drawingImage.height()) {

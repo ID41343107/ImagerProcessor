@@ -295,8 +295,9 @@ void ip::mouseReleaseEvent (QMouseEvent *event)
                                                        Qt::KeepAspectRatio, 
                                                        Qt::SmoothTransformation);
             
-            // Open zoom editor window
-            ZoomEditor *zoomEditor = new ZoomEditor(zoomedImage, this);
+            // Open zoom editor window with Qt::WA_DeleteOnClose to prevent memory leak
+            ZoomEditor *zoomEditor = new ZoomEditor(zoomedImage);
+            zoomEditor->setAttribute(Qt::WA_DeleteOnClose);
             zoomEditor->show();
             
             statusBar()->showMessage(QStringLiteral("已開啟放大編輯視窗"), 3000);
