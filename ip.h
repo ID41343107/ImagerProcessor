@@ -7,6 +7,7 @@
 #include <QToolBar>
 #include <QImage>
 #include <QLabel>
+#include "gtransform.h"
 
 
 class ip : public QMainWindow
@@ -25,8 +26,10 @@ private slots:
     void showOpenFile();
     void bigsize();
     void ssize();
+    void showGeometryTransform();
 
 private:
+    gtransform *gWin;
     QWidget *central;
     QMenu *fileMenu;
     QToolBar *fileTool;
@@ -37,5 +40,6 @@ private:
     QAction *exitAction;
     QAction *bigFileAction;
     QAction *sAction;
+    QAction *geometryAction;
 };
 #endif // IP_H

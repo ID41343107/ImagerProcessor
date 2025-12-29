@@ -12,6 +12,7 @@ ip::ip(QWidget *parent)
     QHBoxLayout *mainLayout = new QHBoxLayout (central);
     imgWin = new QLabel();
     QPixmap *initPixmap = new QPixmap(300,200);
+    gWin =new gtransform();
     initPixmap->fill (QColor(255,255,255));
     imgWin->resize (300,200);
     imgWin->setScaledContents (true);
@@ -50,20 +51,30 @@ void ip::createActions()
     sAction->setShortcut (tr("Ctrl-"));
     sAction->setStatusTip (QStringLiteral("縮小"));
     connect (sAction, SIGNAL (triggered()), this, SLOT (ssize()));
+
+    geometryAction = new QAction (QStringLiteral("幾何轉換"),this);
+    geometryAction->setShortcut (tr("Ctrl+G"));
+    geometryAction->setStatusTip (QStringLiteral("影像幾何轉換"));
+    connect (geometryAction, SIGNAL (triggered()), this, SLOT (showGeometryTransform()));
+    connect (exitAction, SIGNAL (triggered()),gWin, SLOT (close()));
 }
 void ip::createMenus()
 {
     fileMenu = menuBar ()->addMenu (QStringLiteral ("檔案&F"));
     fileMenu->addAction(openFileAction);
+    fileMenu->addAction (geometryAction);
     fileMenu->addAction (exitAction);
+
     fileMenu = menuBar ()->addMenu (QStringLiteral ("工具&T"));
     fileMenu->addAction(bigFileAction);
     fileMenu->addAction (sAction);
+
 }
 void ip::createToolBars ()
 {
     fileTool = addToolBar("file");
     fileTool->addAction (openFileAction);
+    fileTool->addAction (geometryAction);
     fileTool = addToolBar("file");
     fileTool->addAction (bigFileAction);
     fileTool->addAction (sAction);
@@ -117,4 +128,12 @@ void ip::ssize()
     ret->setPixmap(QPixmap::fromImage(ssize));
     ret->setWindowTitle(tr("縮小結果"));
     ret->show();
+}
+
+void ip:: showGeometryTransform()
+{
+    if (!img.isNull())
+    gWin->srcImg = img;
+    gWin->inWin->setPixmap (QPixmap:: fromImage (gWin->srcImg));
+    gWin->show();
 }
