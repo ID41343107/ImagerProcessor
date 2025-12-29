@@ -177,7 +177,7 @@ void ip::mouseMoveEvent (QMouseEvent *event)
     {
         QColor color = img.pixelColor(x, y);
         int grayValue = (color.red() + color.green() + color.blue()) / 3;
-        str += " Gray: " + QString::number(grayValue);
+        str += " = " + QString::number(grayValue);
     }
     mousePosLabel->setText(str);
 }
