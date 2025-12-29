@@ -72,6 +72,8 @@ CMakeLists.txt.user*
 # --------
 *.dll
 *.exe
+ImagerProcessor
+moc_predefs.h
 
 # Directories with generated files
 .moc/
