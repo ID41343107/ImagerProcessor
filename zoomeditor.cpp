@@ -136,8 +136,8 @@ void ZoomEditor::createToolBar()
     toolBar->addSeparator();
     
     // Brush size control
-    toolBar->addWidget(new QLabel(QStringLiteral("筆刷大小: ")));
-    brushSizeSpinBox = new QSpinBox();
+    toolBar->addWidget(new QLabel(QStringLiteral("筆刷大小: "), toolBar));
+    brushSizeSpinBox = new QSpinBox(toolBar);
     brushSizeSpinBox->setRange(1, 50);
     brushSizeSpinBox->setValue(3);  // Default brush size
     connect(brushSizeSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
