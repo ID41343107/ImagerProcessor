@@ -1,4 +1,4 @@
-#include "ip.h"
+ #include "ip.h"
 #include <QHBoxLayout>
 #include <QMenuBar>
 #include <QFileDialog>
