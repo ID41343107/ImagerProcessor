@@ -12,12 +12,14 @@ SOURCES += \
     gtransform.cpp \
     main.cpp \
     ip.cpp \
-    mouseevent.cpp
+    mouseevent.cpp \
+    zoomeditor.cpp
 
 HEADERS += \
     gtransform.h \
     ip.h \
-    mouseevent.h
+    mouseevent.h \
+    zoomeditor.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

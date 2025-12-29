@@ -4,9 +4,13 @@
 #include <QFileDialog>
 #include <QDebug>
 #include <QStatusBar>
+#include <QInputDialog>
+#include <QRubberBand>
 
 ip::ip(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent),
+      zoomSelectionMode(false),
+      rubberBand(nullptr)
 {
     statusLabel = new QLabel;
     statusLabel->setText (QStringLiteral("指標位置"));
@@ -69,6 +73,11 @@ void ip::createActions()
     geometryAction->setStatusTip (QStringLiteral("影像幾何轉換"));
     connect (geometryAction, SIGNAL (triggered()), this, SLOT (showGeometryTransform()));
     connect (exitAction, SIGNAL (triggered()),gWin, SLOT (close()));
+
+    zoomSelectionAction = new QAction (QStringLiteral("區域放大"),this);
+    zoomSelectionAction->setShortcut (tr("Ctrl+Z"));
+    zoomSelectionAction->setStatusTip (QStringLiteral("拖曳選取區域進行放大"));
+    connect (zoomSelectionAction, SIGNAL (triggered()), this, SLOT (enableZoomSelection()));
 }
 void ip::createMenus()
 {
@@ -79,6 +88,7 @@ void ip::createMenus()
     fileMenu = menuBar ()->addMenu (QStringLiteral ("工具&T"));
     fileMenu->addAction(bigFileAction);
     fileMenu->addAction (sAction);
+    fileMenu->addAction (zoomSelectionAction);
     fileMenu->addAction (geometryAction);
 }
 void ip::createToolBars ()
@@ -88,6 +98,7 @@ void ip::createToolBars ()
     fileTool = addToolBar("file");
     fileTool->addAction (bigFileAction);
     fileTool->addAction (sAction);
+    fileTool->addAction (zoomSelectionAction);
     fileTool->addAction (geometryAction);
 }
 void ip::loadFile (QString filename)
@@ -149,6 +160,25 @@ void ip:: showGeometryTransform()
     gWin->show();
 }
 
+void ip::enableZoomSelection()
+{
+    if (img.isNull()) {
+        statusBar()->showMessage(QStringLiteral("請先開啟圖片！"), 3000);
+        return;
+    }
+    zoomSelectionMode = !zoomSelectionMode;
+    if (zoomSelectionMode) {
+        statusBar()->showMessage(QStringLiteral("區域放大模式已啟用，請拖曳滑鼠選取區域"), 3000);
+        setCursor(Qt::CrossCursor);
+    } else {
+        statusBar()->showMessage(QStringLiteral("區域放大模式已關閉"), 3000);
+        setCursor(Qt::ArrowCursor);
+        if (rubberBand) {
+            rubberBand->hide();
+        }
+    }
+}
+
 void ip::mouseMoveEvent (QMouseEvent *event)
 {
     int x=event->x();
@@ -162,11 +192,28 @@ void ip::mouseMoveEvent (QMouseEvent *event)
         str += " = " + QString::number(grayValue);
     }
     mousePosLabel->setText(str);
+
+    // Handle rubber band for zoom selection
+    if (zoomSelectionMode && rubberBand && !selectionStart.isNull()) {
+        rubberBand->setGeometry(QRect(selectionStart, event->pos()).normalized());
+    }
 }
 void ip::mousePressEvent (QMouseEvent *event)
 {
     QString str = "("+ QString::number (event->x()) + "," +
                   QString::number (event->y()) +")";
+    
+    if (zoomSelectionMode && event->button() == Qt::LeftButton) {
+        selectionStart = event->pos();
+        if (!rubberBand) {
+            rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
+        }
+        rubberBand->setGeometry(QRect(selectionStart, QSize()));
+        rubberBand->show();
+        statusBar()->showMessage(QStringLiteral("選取中..."));
+        return;
+    }
+    
     if (event->button() == Qt::LeftButton)
     {
         statusBar()->showMessage (QStringLiteral("左鍵:")+str);
@@ -185,5 +232,81 @@ void ip::mouseReleaseEvent (QMouseEvent *event)
 {
     QString str = "(" + QString::number (event->x()) + "," +
                   QString::number (event->y()) +")";
+    
+    if (zoomSelectionMode && event->button() == Qt::LeftButton && rubberBand) {
+        selectionEnd = event->pos();
+        rubberBand->hide();
+        
+        // Get the selection rectangle
+        QRect selectionRect = QRect(selectionStart, selectionEnd).normalized();
+        
+        // Check if selection is valid
+        if (selectionRect.width() < 10 || selectionRect.height() < 10) {
+            statusBar()->showMessage(QStringLiteral("選取區域太小！"), 3000);
+            return;
+        }
+        
+        // Convert to image coordinates (account for label position)
+        QPoint labelPos = imgWin->pos();
+        QRect imageRect = QRect(labelPos.x(), labelPos.y(), imgWin->width(), imgWin->height());
+        
+        // Check if selection intersects with image
+        if (!imageRect.intersects(selectionRect)) {
+            statusBar()->showMessage(QStringLiteral("請在圖片區域內選取！"), 3000);
+            return;
+        }
+        
+        // Adjust selection to image coordinates
+        int imgX = selectionRect.x() - labelPos.x();
+        int imgY = selectionRect.y() - labelPos.y();
+        int imgW = selectionRect.width();
+        int imgH = selectionRect.height();
+        
+        // Scale coordinates to actual image size
+        double scaleX = (double)img.width() / imgWin->width();
+        double scaleY = (double)img.height() / imgWin->height();
+        
+        imgX = (int)(imgX * scaleX);
+        imgY = (int)(imgY * scaleY);
+        imgW = (int)(imgW * scaleX);
+        imgH = (int)(imgH * scaleY);
+        
+        // Clamp to image bounds
+        imgX = qMax(0, qMin(imgX, img.width() - 1));
+        imgY = qMax(0, qMin(imgY, img.height() - 1));
+        imgW = qMin(imgW, img.width() - imgX);
+        imgH = qMin(imgH, img.height() - imgY);
+        
+        // Extract the region
+        QImage selectedRegion = img.copy(imgX, imgY, imgW, imgH);
+        
+        // Ask for zoom factor
+        bool ok;
+        double zoomFactor = QInputDialog::getDouble(this,
+                                                    QStringLiteral("放大倍率"),
+                                                    QStringLiteral("請輸入放大倍率 (1.0 - 10.0):"),
+                                                    2.0, 1.0, 10.0, 1, &ok);
+        
+        if (ok && !selectedRegion.isNull()) {
+            // Scale the selected region
+            int newWidth = (int)(selectedRegion.width() * zoomFactor);
+            int newHeight = (int)(selectedRegion.height() * zoomFactor);
+            QImage zoomedImage = selectedRegion.scaled(newWidth, newHeight, 
+                                                       Qt::KeepAspectRatio, 
+                                                       Qt::SmoothTransformation);
+            
+            // Open zoom editor window
+            ZoomEditor *zoomEditor = new ZoomEditor(zoomedImage, this);
+            zoomEditor->show();
+            
+            statusBar()->showMessage(QStringLiteral("已開啟放大編輯視窗"), 3000);
+        }
+        
+        // Reset zoom selection mode
+        zoomSelectionMode = false;
+        setCursor(Qt::ArrowCursor);
+        return;
+    }
+    
     statusBar ()->showMessage (QStringLiteral("釋放:")+str);
 }

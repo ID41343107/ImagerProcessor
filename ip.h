@@ -2,13 +2,17 @@
 #define IP_H
 
 #include <QMainWindow>
-#include <QACtion>
+#include <QAction>
 #include <QMenu>
 #include <QToolBar>
 #include <QImage>
 #include <QLabel>
 #include "gtransform.h"
+#include "zoomeditor.h"
 #include <QMouseEvent>
+#include <QRect>
+#include <QRubberBand>
+#include <QInputDialog>
 
 
 class ip : public QMainWindow
@@ -33,6 +37,7 @@ private slots:
     void bigsize();
     void ssize();
     void showGeometryTransform();
+    void enableZoomSelection();
 
 private:
     gtransform *gWin;
@@ -51,6 +56,13 @@ private:
     QAction *bigFileAction;
     QAction *sAction;
     QAction *geometryAction;
+    QAction *zoomSelectionAction;
+
+    // For zoom selection
+    bool zoomSelectionMode;
+    QPoint selectionStart;
+    QPoint selectionEnd;
+    QRubberBand *rubberBand;
 
 };
 #endif // IP_H
