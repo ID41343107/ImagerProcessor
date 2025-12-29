@@ -62,22 +62,21 @@ void ip::createMenus()
 {
     fileMenu = menuBar ()->addMenu (QStringLiteral ("檔案&F"));
     fileMenu->addAction(openFileAction);
-    fileMenu->addAction (geometryAction);
     fileMenu->addAction (exitAction);
 
     fileMenu = menuBar ()->addMenu (QStringLiteral ("工具&T"));
     fileMenu->addAction(bigFileAction);
     fileMenu->addAction (sAction);
-
+    fileMenu->addAction (geometryAction);
 }
 void ip::createToolBars ()
 {
     fileTool = addToolBar("file");
     fileTool->addAction (openFileAction);
-    fileTool->addAction (geometryAction);
     fileTool = addToolBar("file");
     fileTool->addAction (bigFileAction);
     fileTool->addAction (sAction);
+    fileTool->addAction (geometryAction);
 }
 void ip::loadFile (QString filename)
 {
