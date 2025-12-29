@@ -20,6 +20,7 @@ public:
     QImage getDrawingImage() const { return drawingImage; }
     void setOriginalImage(const QImage &image) { originalImage = image; }
     void setBrushColor(const QColor &color) { brushColor = color; }
+    QColor getBrushColor() const { return brushColor; }
     void setBrushSize(int size) { brushSize = size; }
     void clearDrawing();
 

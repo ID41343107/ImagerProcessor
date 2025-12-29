@@ -168,7 +168,7 @@ void ZoomEditor::saveImage()
 
 void ZoomEditor::chooseBrushColor()
 {
-    QColor color = QColorDialog::getColor(imageLabel->property("brushColor").value<QColor>(), 
+    QColor color = QColorDialog::getColor(imageLabel->getBrushColor(), 
                                          this, QStringLiteral("選擇畫筆顏色"));
     if (color.isValid()) {
         imageLabel->setBrushColor(color);
