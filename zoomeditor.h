@@ -9,9 +9,35 @@
 #include <QAction>
 #include <QMouseEvent>
 #include <QSpinBox>
-#include <QColorDialog>
-#include <QPainter>
-#include <QVBoxLayout>
+
+// Custom label that handles drawing
+class DrawableLabel : public QLabel
+{
+    Q_OBJECT
+public:
+    DrawableLabel(QWidget *parent = nullptr);
+    void setDrawingImage(const QImage &image);
+    QImage getDrawingImage() const { return drawingImage; }
+    void setOriginalImage(const QImage &image) { originalImage = image; }
+    void setBrushColor(const QColor &color) { brushColor = color; }
+    void setBrushSize(int size) { brushSize = size; }
+    void clearDrawing();
+
+protected:
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+
+private:
+    void drawLineTo(const QPoint &endPoint);
+    
+    QImage originalImage;
+    QImage drawingImage;
+    bool isDrawing;
+    QPoint lastPoint;
+    QColor brushColor;
+    int brushSize;
+};
 
 class ZoomEditor : public QMainWindow
 {
@@ -20,11 +46,6 @@ class ZoomEditor : public QMainWindow
 public:
     ZoomEditor(const QImage &image, QWidget *parent = nullptr);
     ~ZoomEditor();
-
-protected:
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
 
 private slots:
     void saveImage();
@@ -35,17 +56,8 @@ private slots:
 private:
     void createActions();
     void createToolBar();
-    void drawLineTo(const QPoint &endPoint);
 
-    QImage originalImage;
-    QImage drawingImage;
-    QLabel *imageLabel;
-    
-    // Drawing tools
-    bool isDrawing;
-    QPoint lastPoint;
-    QColor brushColor;
-    int brushSize;
+    DrawableLabel *imageLabel;
     
     // Actions
     QAction *saveAction;

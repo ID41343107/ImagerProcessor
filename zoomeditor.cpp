@@ -6,14 +6,82 @@
 #include <QScrollArea>
 #include <QPainter>
 #include <QMessageBox>
+#include <QColorDialog>
 
-ZoomEditor::ZoomEditor(const QImage &image, QWidget *parent)
-    : QMainWindow(parent),
-      originalImage(image),
-      drawingImage(image),
+// DrawableLabel implementation
+DrawableLabel::DrawableLabel(QWidget *parent)
+    : QLabel(parent),
       isDrawing(false),
       brushColor(Qt::red),
       brushSize(3)
+{
+    setMouseTracking(true);
+}
+
+void DrawableLabel::setDrawingImage(const QImage &image)
+{
+    drawingImage = image;
+    originalImage = image;
+    setPixmap(QPixmap::fromImage(drawingImage));
+}
+
+void DrawableLabel::clearDrawing()
+{
+    drawingImage = originalImage.copy();
+    setPixmap(QPixmap::fromImage(drawingImage));
+    update();
+}
+
+void DrawableLabel::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton) {
+        QPoint pos = event->pos();
+        if (pos.x() >= 0 && pos.x() < drawingImage.width() &&
+            pos.y() >= 0 && pos.y() < drawingImage.height()) {
+            lastPoint = pos;
+            isDrawing = true;
+        }
+    }
+}
+
+void DrawableLabel::mouseMoveEvent(QMouseEvent *event)
+{
+    if ((event->buttons() & Qt::LeftButton) && isDrawing) {
+        QPoint pos = event->pos();
+        if (pos.x() >= 0 && pos.x() < drawingImage.width() &&
+            pos.y() >= 0 && pos.y() < drawingImage.height()) {
+            drawLineTo(pos);
+        }
+    }
+}
+
+void DrawableLabel::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton && isDrawing) {
+        QPoint pos = event->pos();
+        if (pos.x() >= 0 && pos.x() < drawingImage.width() &&
+            pos.y() >= 0 && pos.y() < drawingImage.height()) {
+            drawLineTo(pos);
+        }
+        isDrawing = false;
+    }
+}
+
+void DrawableLabel::drawLineTo(const QPoint &endPoint)
+{
+    QPainter painter(&drawingImage);
+    painter.setPen(QPen(brushColor, brushSize, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter.drawLine(lastPoint, endPoint);
+    
+    lastPoint = endPoint;
+    
+    setPixmap(QPixmap::fromImage(drawingImage));
+    update();
+}
+
+// ZoomEditor implementation
+ZoomEditor::ZoomEditor(const QImage &image, QWidget *parent)
+    : QMainWindow(parent)
 {
     setWindowTitle(QStringLiteral("放大編輯器"));
     
@@ -22,8 +90,8 @@ ZoomEditor::ZoomEditor(const QImage &image, QWidget *parent)
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
     
     QScrollArea *scrollArea = new QScrollArea(this);
-    imageLabel = new QLabel();
-    imageLabel->setPixmap(QPixmap::fromImage(drawingImage));
+    imageLabel = new DrawableLabel();
+    imageLabel->setDrawingImage(image);
     imageLabel->setScaledContents(false);
     
     scrollArea->setWidget(imageLabel);
@@ -71,7 +139,7 @@ void ZoomEditor::createToolBar()
     toolBar->addWidget(new QLabel(QStringLiteral("筆刷大小: ")));
     brushSizeSpinBox = new QSpinBox();
     brushSizeSpinBox->setRange(1, 50);
-    brushSizeSpinBox->setValue(brushSize);
+    brushSizeSpinBox->setValue(3);  // Default brush size
     connect(brushSizeSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
             this, &ZoomEditor::setBrushSize);
     toolBar->addWidget(brushSizeSpinBox);
@@ -89,7 +157,7 @@ void ZoomEditor::saveImage()
     if (fileName.isEmpty())
         return;
     
-    if (drawingImage.save(fileName)) {
+    if (imageLabel->getDrawingImage().save(fileName)) {
         QMessageBox::information(this, QStringLiteral("成功"),
                                 QStringLiteral("圖片已成功儲存！"));
     } else {
@@ -100,73 +168,20 @@ void ZoomEditor::saveImage()
 
 void ZoomEditor::chooseBrushColor()
 {
-    QColor color = QColorDialog::getColor(brushColor, this, QStringLiteral("選擇畫筆顏色"));
+    QColor color = QColorDialog::getColor(imageLabel->property("brushColor").value<QColor>(), 
+                                         this, QStringLiteral("選擇畫筆顏色"));
     if (color.isValid()) {
-        brushColor = color;
+        imageLabel->setBrushColor(color);
     }
 }
 
 void ZoomEditor::setBrushSize(int size)
 {
-    brushSize = size;
+    imageLabel->setBrushSize(size);
 }
 
 void ZoomEditor::clearDrawing()
 {
-    drawingImage = originalImage.copy();
-    imageLabel->setPixmap(QPixmap::fromImage(drawingImage));
-    update();
+    imageLabel->clearDrawing();
 }
 
-void ZoomEditor::mousePressEvent(QMouseEvent *event)
-{
-    if (event->button() == Qt::LeftButton) {
-        // Get position relative to imageLabel
-        QPoint labelPos = imageLabel->mapFrom(this, event->pos());
-        
-        // Check if click is within image bounds
-        if (labelPos.x() >= 0 && labelPos.x() < drawingImage.width() &&
-            labelPos.y() >= 0 && labelPos.y() < drawingImage.height()) {
-            lastPoint = labelPos;
-            isDrawing = true;
-        }
-    }
-}
-
-void ZoomEditor::mouseMoveEvent(QMouseEvent *event)
-{
-    if ((event->buttons() & Qt::LeftButton) && isDrawing) {
-        QPoint labelPos = imageLabel->mapFrom(this, event->pos());
-        
-        // Check if position is within image bounds
-        if (labelPos.x() >= 0 && labelPos.x() < drawingImage.width() &&
-            labelPos.y() >= 0 && labelPos.y() < drawingImage.height()) {
-            drawLineTo(labelPos);
-        }
-    }
-}
-
-void ZoomEditor::mouseReleaseEvent(QMouseEvent *event)
-{
-    if (event->button() == Qt::LeftButton && isDrawing) {
-        QPoint labelPos = imageLabel->mapFrom(this, event->pos());
-        
-        if (labelPos.x() >= 0 && labelPos.x() < drawingImage.width() &&
-            labelPos.y() >= 0 && labelPos.y() < drawingImage.height()) {
-            drawLineTo(labelPos);
-        }
-        isDrawing = false;
-    }
-}
-
-void ZoomEditor::drawLineTo(const QPoint &endPoint)
-{
-    QPainter painter(&drawingImage);
-    painter.setPen(QPen(brushColor, brushSize, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-    painter.drawLine(lastPoint, endPoint);
-    
-    lastPoint = endPoint;
-    
-    imageLabel->setPixmap(QPixmap::fromImage(drawingImage));
-    update();
-}
