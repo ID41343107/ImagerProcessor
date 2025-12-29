@@ -33,7 +33,6 @@ private slots:
     void bigsize();
     void ssize();
     void showGeometryTransform();
-    void deleteResources();
 
 private:
     gtransform *gWin;
@@ -52,7 +51,6 @@ private:
     QAction *bigFileAction;
     QAction *sAction;
     QAction *geometryAction;
-    QAction *releaseAction;
 
 };
 #endif // IP_H

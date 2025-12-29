@@ -40,7 +40,6 @@ ip::ip(QWidget *parent)
 
 ip::~ip()
 {
-    deleteResources();
 }
 
 void ip::createActions()
@@ -70,11 +69,6 @@ void ip::createActions()
     geometryAction->setStatusTip (QStringLiteral("影像幾何轉換"));
     connect (geometryAction, SIGNAL (triggered()), this, SLOT (showGeometryTransform()));
     connect (exitAction, SIGNAL (triggered()),gWin, SLOT (close()));
-
-    releaseAction = new QAction(QStringLiteral("釋放"), this);
-    releaseAction->setShortcut (tr("Ctrl+d"));
-    releaseAction->setStatusTip (QStringLiteral("釋放"));
-    connect (releaseAction, &QAction::triggered, this, &ip::deleteResources);
 }
 void ip::createMenus()
 {
@@ -86,7 +80,6 @@ void ip::createMenus()
     fileMenu->addAction(bigFileAction);
     fileMenu->addAction (sAction);
     fileMenu->addAction (geometryAction);
-    fileMenu->addAction (releaseAction);
 }
 void ip::createToolBars ()
 {
@@ -154,17 +147,6 @@ void ip:: showGeometryTransform()
     gWin->srcImg = img;
     gWin->inWin->setPixmap (QPixmap:: fromImage (gWin->srcImg));
     gWin->show();
-}
-
-void ip::deleteResources()
-{
-    if (gWin != nullptr)
-    {
-        delete gWin;
-        gWin = nullptr;
-    }
-    img = QImage();
-    statusBar()->showMessage(QStringLiteral("資源已釋放"));
 }
 
 void ip::mouseMoveEvent (QMouseEvent *event)
