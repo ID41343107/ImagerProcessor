@@ -74,7 +74,7 @@ void ip::createActions()
     connect (geometryAction, SIGNAL (triggered()), this, SLOT (showGeometryTransform()));
     connect (exitAction, SIGNAL (triggered()),gWin, SLOT (close()));
 
-    // 建立區域放大功能的動作 (Region Zoom Action)
+    // 建立區域放大功能的動作
     // 此功能允許使用者拖曳選取圖片的特定區域，然後以自訂倍率放大
     zoomSelectionAction = new QAction (QStringLiteral("區域放大"),this);
     zoomSelectionAction->setShortcut (tr("Ctrl+Z"));
@@ -163,19 +163,6 @@ void ip:: showGeometryTransform()
 }
 
 
-/**
- * 啟用/關閉區域放大選取模式
- * 
- * 功能說明：
- * 1. 檢查是否已載入圖片，若未載入則顯示提示訊息
- * 2. 切換 zoomSelectionMode 狀態（開啟/關閉）
- * 3. 開啟時：
- *    - 將游標改為十字型，方便使用者精確選取
- *    - 顯示提示訊息告知使用者如何操作
- * 4. 關閉時：
- *    - 將游標改回一般箭頭
- *    - 隱藏選取框（如果存在）
- */
 void ip::enableZoomSelection()
 {
     if (img.isNull()) {
@@ -253,22 +240,11 @@ void ip::mouseReleaseEvent (QMouseEvent *event)
     QString str = "(" + QString::number (event->x()) + "," +
                   QString::number (event->y()) +")";
     
-    /**
-     * 區域選取功能：完成選取並開啟放大編輯視窗
-     * 
-     * 處理流程：
-     * 1. 驗證選取區域是否有效（大小需 >= 10x10 像素）
-     * 2. 將視窗座標轉換為圖片座標
-     * 3. 計算縮放比例（因為顯示的圖片可能與實際大小不同）
-     * 4. 擷取選取區域的圖片
-     * 5. 詢問使用者放大倍率
-     * 6. 將選取區域放大並開啟新的編輯視窗
-     */
     if (zoomSelectionMode && event->button() == Qt::LeftButton && rubberBand) {
         selectionEnd = event->pos();  // 記錄選取結束點
         rubberBand->hide();           // 隱藏選取框
         
-        // 步驟 1：建立選取矩形並標準化（確保左上到右下的順序）
+        // 建立選取矩形並標準化
         QRect selectionRect = QRect(selectionStart, selectionEnd).normalized();
         
         // 驗證選取區域大小是否足夠
@@ -277,7 +253,7 @@ void ip::mouseReleaseEvent (QMouseEvent *event)
             return;
         }
         
-        // 步驟 2：取得圖片顯示標籤的位置，用於座標轉換
+        // 取得圖片顯示標籤的位置，用於座標轉換
         QPoint labelPos = imgWin->pos();
         QRect imageRect = QRect(labelPos.x(), labelPos.y(), imgWin->width(), imgWin->height());
         
@@ -287,13 +263,13 @@ void ip::mouseReleaseEvent (QMouseEvent *event)
             return;
         }
         
-        // 步驟 3：將選取座標轉換為相對於圖片的座標
+        // 將選取座標轉換為相對於圖片的座標
         int imgX = selectionRect.x() - labelPos.x();
         int imgY = selectionRect.y() - labelPos.y();
         int imgW = selectionRect.width();
         int imgH = selectionRect.height();
         
-        // 計算縮放比例（實際圖片大小 / 顯示大小）
+        // 計算縮放比例
         // 因為 imgWin 可能會縮放顯示圖片，所以需要將座標對應回實際圖片
         double scaleX = (double)img.width() / imgWin->width();
         double scaleY = (double)img.height() / imgWin->height();
@@ -310,17 +286,17 @@ void ip::mouseReleaseEvent (QMouseEvent *event)
         imgW = qMin(imgW, img.width() - imgX);
         imgH = qMin(imgH, img.height() - imgY);
         
-        // 步驟 4：從原圖中擷取選取的區域
+        // 從原圖中擷取選取的區域
         QImage selectedRegion = img.copy(imgX, imgY, imgW, imgH);
         
-        // 步驟 5：彈出對話框讓使用者輸入放大倍率（1.0 到 10.0 倍）
+        // 彈出對話框讓使用者輸入放大倍率（1.0 到 10.0 倍）
         bool ok;
         double zoomFactor = QInputDialog::getDouble(this,
                                                     QStringLiteral("放大倍率"),
                                                     QStringLiteral("請輸入放大倍率 (1.0 - 10.0):"),
                                                     2.0, 1.0, 10.0, 1, &ok);
         
-        // 步驟 6：如果使用者確認且選取區域有效，則進行放大並開啟編輯視窗
+        // 如果使用者確認且選取區域有效，則進行放大並開啟編輯視窗
         if (ok && !selectedRegion.isNull()) {
             // 計算放大後的新尺寸
             int newWidth = (int)(selectedRegion.width() * zoomFactor);
